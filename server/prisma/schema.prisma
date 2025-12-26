@@ -1,0 +1,55 @@
+// Prisma schema for InsightWorkspace MVP
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Project {
+  id          String   @id @default(uuid())
+  title       String
+  topic       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  sources     SourceText[]
+  runs        GenerationRun[]
+}
+
+model SourceText {
+  id          String   @id @default(uuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  type        String   // 'reference' | 'myNotes'
+  content     String
+  createdAt   DateTime @default(now())
+}
+
+model GenerationRun {
+  id          String   @id @default(uuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  type        String   // 'analysis' | 'script'
+  preset      String?  // tone preset
+  hookStyle   String?
+  targetLength Int?    // minutes
+  
+  inputSnapshot String // JSON snapshot of inputs at generation time
+  result      String   // JSON result from LLM
+  
+  llmProvider String   // 'openai' | 'anthropic'
+  llmModel    String
+  tokensUsed  Int?
+  
+  createdAt   DateTime @default(now())
+  
+  // Metrics for "time reduction"
+  generationTimeMs Int?
+}
+
